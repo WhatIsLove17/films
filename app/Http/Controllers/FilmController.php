@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Film;
+use App\Models\FilmTag;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 
 class filmController extends Controller
@@ -15,17 +17,23 @@ class filmController extends Controller
 
     public function create(){
         $categories = Category::all();
-        return view('film.create', compact('categories'));
+        $tags = Tag::all();
+        return view('film.create', compact('categories', 'tags'));
     }
 
     public function store(){
         $data = request()->validate([
-            'title'=>'string',
-            'description'=>'string',
-            'year'=>'date',
-            'category_id'=>''
+            'title'=>'required|string',
+            'description'=>'required|string',
+            'year'=>'required|date',
+            'category_id'=>'',
+            'tags'=>''
         ]);
-        Film::create($data);
+        $tags = $data['tags'];
+        unset($data['tags']);
+        $film = Film::create($data);
+        $film->tags()->attach($tags);
+
         return redirect()->route('film.index');
     }
 
@@ -34,16 +42,23 @@ class filmController extends Controller
     }
 
     public function edit(Film $film){
-        return view('film.edit', compact('film'));
+        $categories = Category::all();
+        $tags = Tag::all();
+        return view('film.edit', compact('film', 'categories', 'tags'));
     }
 
     public function update(Film $film){
         $data = request()->validate([
             'title'=>'string',
             'description'=>'string',
-            'year'=>'date'
+            'year'=>'date',
+            'category_id'=>'',
+            'tags' => ''
         ]);
+        $tags = $data['tags'];
+        unset($data['tags']);
         $film->update($data);
+        $film->tags()->sync($tags);
         return redirect()->route('film.show', $film);
     }
 
